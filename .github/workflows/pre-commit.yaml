@@ -54,7 +54,7 @@ jobs:
       - name: Commit changes
         uses: devops-infra/action-commit-push@f01d24007c469639f252dc88109ef96bfbff33db
         if: steps.run_pre_commit.outputs.needs_fixes == 'true' && inputs.autofix == 'true'
-        run: |
+        with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           add_timestamp: true
           commit_prefix: "[pre-commit]"
