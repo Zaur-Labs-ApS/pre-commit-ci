@@ -68,12 +68,12 @@ jobs:
         continue-on-error: true
 
       - name: Check pre-commit status
-        if: steps.run_pre_commit.outcome != 'success' && ${{ !inputs.autofix }}
+        if: steps.run_pre_commit.outcome != 'success' && inputs.autofix == false
         run: exit 1
 
       - name: Commit changes
         uses: devops-infra/action-commit-push@f01d24007c469639f252dc88109ef96bfbff33db
-        if: steps.run_pre_commit.outcome != 'success' && inputs.autofix
+        if: steps.run_pre_commit.outcome != 'success' && inputs.autofix == true
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           add_timestamp: true
