@@ -69,11 +69,12 @@ jobs:
           else
             echo "needs_fixes=true" >> "$GITHUB_OUTPUT"
           fi
+          echo $GITHUB_OUTPUT
         continue-on-error: true
 
       - name: Commit changes
         uses: devops-infra/action-commit-push@f01d24007c469639f252dc88109ef96bfbff33db
-        if: steps.run_pre_commit.outputs.needs_fixes == 'true' && inputs.autofix == 'true'
+        if: steps.run_pre_commit.outputs.needs_fixes && inputs.autofix == 'true'
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           add_timestamp: true
