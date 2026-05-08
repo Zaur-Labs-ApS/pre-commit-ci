@@ -1,10 +1,23 @@
 name: pre-commit
 
 on:
-  pull_request:
+  workflow_call:
+    inputs:
+      python_version:
+        required: false
+        default: '3.14'
+        type: string
+      autofix:
+        required: false
+        default: true
+        type: boolean
+      organization_domain:
+        required: false
+        default: 'github.com'
+        type: string
   workflow_dispatch:
     inputs:
-      python-version:
+      python_version:
         description: 'Python version to use'
         required: false
         default: '3.14'
@@ -36,10 +49,12 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
         with:
-          python-version: ${{ inputs.python-version }}
+          python-version: ${{ inputs.python_version }}
+          enable-cache: true
 
       - name: Install pre-commit
-        run: uv pip install pre-commit==4.6.0
+        run: |
+          uv pip install --python ${{ inputs.python_version }} pre-commit==4.6.0
 
       - name: Run pre-commit
         id: run_pre_commit
