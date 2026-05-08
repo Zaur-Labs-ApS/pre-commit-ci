@@ -1,0 +1,60 @@
+name: pre-commit
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      python-version:
+        description: 'Python version to use'
+        required: false
+        default: '3.14'
+        type: string
+      autofix:
+        description: 'Auto-commit fixes back to the PR'
+        required: false
+        default: true
+        type: boolean
+      organization_domain:
+        description: 'GitHub Enterprise domain name. (If applicable)'
+        required: false
+        default: 'github.com'
+        type: string
+
+jobs:
+  pre-commit:
+    name: pre-commit
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install pre-commit
+        run: uv pip install pre-commit==4.6.0
+
+      - name: Run pre-commit
+        id: run-pre-commit
+        run: |
+          if uv run pre-commit run --all-files --show-diff-on-failure; then
+            echo "needs_fixes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_fixes=true" >> "$GITHUB_OUTPUT"
+          fi
+        continue-on-error: true
+
+      - name: Commit changes
+        uses: devops-infra/action-commit-push@f01d24007c469639f252dc88109ef96bfbff33db
+        if: steps.run-pre-commit.outputs.needs_fixes == 'true'
+        run: |
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          add_timestamp: true
+          commit_prefix: "[pre-commit]"
+          commit_message: "Changes"
+          organization_domain: ${{ inputs.organization_domain }}
