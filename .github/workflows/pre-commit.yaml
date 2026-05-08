@@ -53,11 +53,13 @@ jobs:
           enable-cache: true
 
       - name: Setup Python
-        run: uv python install
+        run: |
+          uv python install
+          uv venv
 
       - name: Install pre-commit
         run: |
-          uv pip install --python ${{ inputs.python_version }} --system pre-commit==4.6.0
+          uv pip install pre-commit==4.6.0
 
       - name: Run pre-commit
         id: run_pre_commit
