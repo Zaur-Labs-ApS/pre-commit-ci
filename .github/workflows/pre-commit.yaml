@@ -57,7 +57,7 @@ jobs:
 
       - name: Install pre-commit
         run: |
-          uv pip install --python ${{ inputs.python_version }} pre-commit==4.6.0
+          uv pip install --python ${{ inputs.python_version }} --system pre-commit==4.6.0
 
       - name: Run pre-commit
         id: run_pre_commit
