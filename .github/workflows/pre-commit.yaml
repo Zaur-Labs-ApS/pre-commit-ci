@@ -64,16 +64,12 @@ jobs:
       - name: Run pre-commit
         id: run_pre_commit
         run: |
-          if uv run pre-commit run --all-files --show-diff-on-failure; then
-            echo "needs_fixes=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "needs_fixes=true" >> "$GITHUB_OUTPUT"
-          fi
+          uv run pre-commit run --all-files --show-diff-on-failure
         continue-on-error: true
 
       - name: Commit changes
         uses: devops-infra/action-commit-push@f01d24007c469639f252dc88109ef96bfbff33db
-        if: steps.run_pre_commit.outputs.needs_fixes && inputs.autofix
+        if: steps.run_pre_commit.outcome != 'success' && inputs.autofix
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           add_timestamp: true
