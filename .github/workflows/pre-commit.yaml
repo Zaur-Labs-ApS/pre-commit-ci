@@ -42,7 +42,7 @@ jobs:
         run: uv pip install pre-commit==4.6.0
 
       - name: Run pre-commit
-        id: run-pre-commit
+        id: run_pre_commit
         run: |
           if uv run pre-commit run --all-files --show-diff-on-failure; then
             echo "needs_fixes=false" >> "$GITHUB_OUTPUT"
@@ -53,7 +53,7 @@ jobs:
 
       - name: Commit changes
         uses: devops-infra/action-commit-push@f01d24007c469639f252dc88109ef96bfbff33db
-        if: steps.run-pre-commit.outputs.needs_fixes == 'true' && inputs.autofix == 'true'
+        if: steps.run_pre_commit.outputs.needs_fixes == 'true' && inputs.autofix == 'true'
         run: |
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           add_timestamp: true
