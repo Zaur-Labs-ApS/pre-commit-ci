@@ -68,7 +68,7 @@ jobs:
         continue-on-error: true
 
       - name: Check pre-commit status
-        if: steps.run_pre_commit != 'success' && ${{ !inputs.autofix }}
+        if: steps.run_pre_commit.outcome != 'success' && ${{ !inputs.autofix }}
         run: exit 1
 
       - name: Commit changes
