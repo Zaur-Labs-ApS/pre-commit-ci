@@ -52,6 +52,9 @@ jobs:
           python-version: ${{ inputs.python_version }}
           enable-cache: true
 
+      - name: Setup Python
+        run: uv python install
+
       - name: Install pre-commit
         run: |
           uv pip install --python ${{ inputs.python_version }} pre-commit==4.6.0
