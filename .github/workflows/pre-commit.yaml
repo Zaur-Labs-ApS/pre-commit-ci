@@ -60,6 +60,14 @@ jobs:
         run: |
           uv pip install pre-commit==4.6.0
 
+      - name: Cache pre-commit environments
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-py${{ inputs.python_version }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-py${{ inputs.python_version }}-
+
       - name: Run pre-commit
         id: run_pre_commit
         run: |
