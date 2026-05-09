@@ -15,6 +15,14 @@ on:
         required: false
         default: 'github.com'
         type: string
+      bot_username:
+        required: false
+        default: 'github-actions[bot]'
+        type: string
+      bot_email:
+        required: false
+        default: '41898282+github-actions[bot]@users.noreply.github.com'
+        type: string
     secrets:
       bot-token:
         required: false
@@ -35,6 +43,14 @@ on:
         description: 'GitHub Enterprise domain name. (If applicable)'
         required: false
         default: 'github.com'
+        type: string
+      bot_username:
+        required: false
+        default: 'github-actions[bot]'
+        type: string
+      bot_email:
+        required: false
+        default: '41898282+github-actions[bot]@users.noreply.github.com'
         type: string
     secrets:
       bot-token:
@@ -92,8 +108,8 @@ jobs:
         if: steps.run_pre_commit.outcome != 'success' && inputs.autofix == true
         run: |
           rm -f uv.lock
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name ${{ inputs.bot_username }}
+          git config user.email ${{ inputs.email }}
           git add -A
           git commit -m "[pre-commit] auto fixes"
           git push
