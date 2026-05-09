@@ -95,6 +95,7 @@ By default, commits made by GITHUB_TOKEN don't trigger other workflows on the PR
 18. Now your workflow can commit and trigger pipelines.
 
 ## Inputs
+
 | Type   | Name                | Description                                                                                                  | Default                                               |
 |--------|---------------------|--------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
 | Input  | python_version      | Used as the Python version.                                                                                  | 3.14                                                  |
