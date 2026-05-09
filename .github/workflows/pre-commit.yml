@@ -24,9 +24,12 @@ on:
         default: '41898282+github-actions[bot]@users.noreply.github.com'
         type: string
     secrets:
-      bot_token:
+      bot_client_id:
         required: false
-        description: 'Token used for committing fixes back to the PR. Falls back to GITHUB_TOKEN.'
+        description: 'Client ID used to generate a token for the flow. (Optional)'
+      bot_private_key:
+        required: false
+        description: 'Private key used to generate a token for the flow. (Optional)'
   workflow_dispatch:
     inputs:
       python_version:
@@ -53,9 +56,12 @@ on:
         default: '41898282+github-actions[bot]@users.noreply.github.com'
         type: string
     secrets:
-      bot_token:
+      bot_client_id:
         required: false
-        description: 'Token used for committing fixes back to the PR. Falls back to GITHUB_TOKEN.'
+        description: 'Client ID used to generate a token for the flow. (Optional)'
+      bot_private_key:
+        required: false
+        description: 'Private key used to generate a token for the flow. (Optional)'
 
 jobs:
   pre-commit:
@@ -67,10 +73,18 @@ jobs:
       contents: write
 
     steps:
+      - name: Create GitHub App token
+        if: secrets.bot_client_id && secrets.bot_private_key
+        id: app-token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3
+        with:
+          client-id: ${{ secrets.bot_client_id }}
+          private-key: ${{ secrets.bot_private_key }}
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           ref: ${{ github.head_ref }}
-          token: ${{ secrets.bot_token || secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           persist-credentials: false
 
       - name: Install uv
@@ -108,7 +122,7 @@ jobs:
       - name: Commit changes
         if: steps.run_pre_commit.outcome != 'success' && inputs.autofix == true
         env:
-          GITHUB_TOKEN: ${{ secrets.bot_token || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: |
           rm -f uv.lock
           git config user.name ${{ inputs.bot_username }}
