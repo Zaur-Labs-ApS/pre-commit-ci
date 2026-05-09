@@ -1,6 +1,7 @@
 # pre-commit-ci
 A drop-in pre-commit pipeline for any repository, designed to be fast.
 
+pre-commit.ci is a great hosted service, but you might want a self-hosted alternative - for private repos, GitHub Enterprise, or to avoid relying on a third party. This workflow gives you the same auto-fix-and-push experience as a reusable GitHub Actions workflow you can call from any repo.
 
 ## Features
 * Drop-in reusable workflow - call it from any repo with a few lines of config
@@ -14,7 +15,7 @@ A drop-in pre-commit pipeline for any repository, designed to be fast.
 
 ## Pipeline Template
 1. Create the file inside your repo.
-    ```
+    ```yaml
     # .github/workflows/pre-commit.yml
     name: pre-commit-ci
 
@@ -34,7 +35,7 @@ A drop-in pre-commit pipeline for any repository, designed to be fast.
 2. Push a commit and pre-commit will run.
 
 ## Create a Github bot (Recommended)
-If you have other workflows inside your repository, you will struggle with the bot not being able to trigger the other workflows when it commits.
+By default, commits made by GITHUB_TOKEN don't trigger other workflows on the PR (this is GitHub's built-in protection against infinite loops). A GitHub App token bypasses this, so your tests and other CI re-run on the auto-fix commit.
 
 1. Create a GitHub app by going to https://github.com/settings/apps. You can also get there by going to GitHub, click on your avatar, choose **Settings**, and **Developer Settings**.
 
@@ -50,22 +51,26 @@ If you have other workflows inside your repository, you will struggle with the b
 
 7. Click **Generate a private key** and save for later.
 
-8. Go into your repository **Secrets and variables** by clicking on the **Settings** tab inside the repository.
+8.  From the App's settings page, click Install App in the left sidebar.
 
-9. Click on **Actions**
+9. Choose the org/account and select the repos where you want the App to operate. "Only select repositories" is recommended.
 
-10. Click **New repository secret**
+10. Go into your repository **Secrets and variables** by clicking on the **Settings** tab inside the repository.
 
-11. Give the secret a name. E.g: PRE_COMMIT_CLIENT_ID
+11. Click on **Actions**
 
-12. Fill the client id you saved earlier.
+12. Click **New repository secret**
 
-13. Click **Add secret**
+13. Give the secret a name. E.g: PRE_COMMIT_CLIENT_ID
 
-14. Do the same for the private key you saved earlier.
+14. Fill the client id you saved earlier.
 
-15. Go into your Github workflow, and add the credentials like this:
-    ```
+15. Click **Add secret**
+
+16. Do the same for the private key you saved earlier.
+
+17. Go into your Github workflow, and add the credentials like this:
+    ```yaml
     # .github/workflows/pre-commit.yml
     name: pre-commit-ci
 
@@ -87,13 +92,13 @@ If you have other workflows inside your repository, you will struggle with the b
                 pull-requests: write
     ```
 
-16. Now your workflow can commit and trigger pipelines.
+18. Now your workflow can commit and trigger pipelines.
 
 ## Inputs
 | Type   | Name                | Description                                                                                                      | Default                                               |
 |--------|---------------------|------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
 | Input  | python_version      | Used as the Python version.                                                                                      | 3.14                                                  |
-| Input  | autofix             | Determines if the script are failing if there are pre-commit errors, or if it will commit it back to the branch. | true                                                  |
+| Input  | autofix             | If true, auto-commits hook fixes back to the PR branch. If false, the workflow fails when hooks find issues.     | true                                                  |
 | Input  | organization_domain | Used if used on the GitHub enterprise platform.                                                                  | github.com                                            |
 | Input  | bot_username        | The username of the GitHub bot.                                                                                  | github-actions[bot]                                   |
 | Input  | bot_email           | The email of the GitHub bot.                                                                                     | 41898282+github-actions[bot]@users.noreply.github.com |
