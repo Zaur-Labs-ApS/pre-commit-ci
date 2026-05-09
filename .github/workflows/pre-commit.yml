@@ -106,6 +106,8 @@ jobs:
 
       - name: Commit changes
         if: steps.run_pre_commit.outcome != 'success' && inputs.autofix == true
+        env:
+          GITHUB_TOKEN: ${{ secrets.bot_token }}
         run: |
           rm -f uv.lock
           git config user.name ${{ inputs.bot_username }}
