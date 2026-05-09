@@ -138,7 +138,7 @@ jobs:
         run: |
           rm -f uv.lock
           git config user.name ${{ inputs.bot_username }}
-          git config user.email ${{ inputs.email }}
+          git config user.email ${{ inputs.bot_email }}
           git add -A
           git commit -m "[pre-commit] auto fixes"
           git push
