@@ -4,8 +4,14 @@ on:
   workflow_call:
     inputs:
       python_version:
+        description: 'Python version to use'
         required: false
         default: '3.14'
+        type: string
+      pre_commit_version:
+        description: 'pre-commit version to use'
+        required: false
+        default: '4.6.0'
         type: string
       autofix:
         required: false
@@ -36,6 +42,11 @@ on:
         description: 'Python version to use'
         required: false
         default: '3.14'
+        type: string
+      pre_commit_version:
+        description: 'pre-commit version to use'
+        required: false
+        default: '4.6.0'
         type: string
       autofix:
         description: 'Auto-commit fixes back to the PR'
@@ -110,7 +121,7 @@ jobs:
 
       - name: Install pre-commit
         run: |
-          uv pip install pre-commit==4.6.0
+          uv pip install pre-commit==${{ inputs.pre_commit_version }}
 
       - name: Cache pre-commit environments
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
