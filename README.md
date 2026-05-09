@@ -95,12 +95,14 @@ By default, commits made by GITHUB_TOKEN don't trigger other workflows on the PR
 18. Now your workflow can commit and trigger pipelines.
 
 ## Inputs
-| Type   | Name                | Description                                                                                                      | Default                                               |
-|--------|---------------------|------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| Input  | python_version      | Used as the Python version.                                                                                      | 3.14                                                  |
-| Input  | autofix             | If true, auto-commits hook fixes back to the PR branch. If false, the workflow fails when hooks find issues.     | true                                                  |
-| Input  | organization_domain | Used if used on the GitHub enterprise platform.                                                                  | github.com                                            |
-| Input  | bot_username        | The username of the GitHub bot.                                                                                  | github-actions[bot]                                   |
-| Input  | bot_email           | The email of the GitHub bot.                                                                                     | 41898282+github-actions[bot]@users.noreply.github.com |
-| Secret | bot_client_id       | The client id of the GitHub bot.                                                                                 |                                                       |
-| Secret | bot_private_key     | The private key of the GitHub bot.                                                                               |                                                       |
+
+| Type   | Name                | Description                                                                                                  | Default                                               |
+|--------|---------------------|--------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
+| Input  | python_version      | Used as the Python version.                                                                                  | 3.14                                                  |
+| Input  | pre_commit_version  | Used as the pre-commit version.                                                                              | 4.6.0                                                 |
+| Input  | autofix             | If true, auto-commits hook fixes back to the PR branch. If false, the workflow fails when hooks find issues. | true                                                  |
+| Input  | organization_domain | Used if used on the GitHub enterprise platform.                                                              | github.com                                            |
+| Input  | bot_username        | The username of the GitHub bot.                                                                              | github-actions[bot]                                   |
+| Input  | bot_email           | The email of the GitHub bot.                                                                                 | 41898282+github-actions[bot]@users.noreply.github.com |
+| Secret | bot_client_id       | The client id of the GitHub bot.                                                                             |                                                       |
+| Secret | bot_private_key     | The private key of the GitHub bot.                                                                           |                                                       |
