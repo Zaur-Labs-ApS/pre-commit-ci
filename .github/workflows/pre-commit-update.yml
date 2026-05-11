@@ -1,4 +1,4 @@
-name: pre-commit
+name: pre-commit-update
 
 on:
   workflow_call:
@@ -13,10 +13,6 @@ on:
         required: false
         default: '4.6.0'
         type: string
-      autofix:
-        required: false
-        default: true
-        type: boolean
       organization_domain:
         required: false
         default: 'github.com'
@@ -48,11 +44,6 @@ on:
         required: false
         default: '4.6.0'
         type: string
-      autofix:
-        description: 'Auto-commit fixes back to the PR'
-        required: false
-        default: true
-        type: boolean
       organization_domain:
         description: 'GitHub Enterprise domain name. (If applicable)'
         required: false
@@ -68,13 +59,14 @@ on:
         type: string
 
 jobs:
-  pre-commit:
-    name: pre-commit
+  pre-commit-update:
+    name: pre-commit-update
 
     runs-on: ubuntu-latest
 
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - name: Check for bot credentials
@@ -116,32 +108,53 @@ jobs:
         run: |
           uv pip install pre-commit==${{ inputs.pre_commit_version }}
 
-      - name: Cache pre-commit environments
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-py${{ inputs.python_version }}-${{ hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: |
-            pre-commit-${{ runner.os }}-py${{ inputs.python_version }}-
-
-      - name: Run pre-commit
-        id: run_pre_commit
+      - name: Run pre-commit autoupdate
+        id: run_pre_commit_autoupdate
         run: |
-          uv run pre-commit run --all-files --show-diff-on-failure
-        continue-on-error: true
-
-      - name: Check pre-commit status
-        if: steps.run_pre_commit.outcome != 'success' && inputs.autofix == false
-        run: exit 1
+          uv run pre-commit autoupdate
+          if ! git diff --quiet .pre-commit-config.yaml; then
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Commit changes
-        if: steps.run_pre_commit.outcome != 'success' && inputs.autofix == true
+        id: commit
+        if: steps.run_pre_commit_autoupdate.outputs.updated == 'true'
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
+          BRANCH="pre-commit-auto-update"
+
           rm -f uv.lock
           git config user.name ${{ inputs.bot_username }}
           git config user.email ${{ inputs.bot_email }}
-          git add -A
-          git commit -m "[pre-commit] auto fixes"
-          git push
+          git add .pre-commit-config.yaml
+          git checkout -b "$BRANCH"
+          git commit -m "[pre-commit] chore: auto update"
+          git push -fu origin "$BRANCH"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Create pull request
+        if: steps.run_pre_commit_autoupdate.outputs.updated == 'true'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="Pre-commit auto update"
+          BODY="Automated PR with updates to pre-commit hooks."
+
+          DEFAULT_BASE="${{ github.event.repository.default_branch }}"
+          OPEN_COUNT="$(gh pr list \
+            --head "${{ steps.commit.outputs.branch }}" \
+            --state open \
+            --json number \
+            --jq 'length')"
+
+          if [[ "$OPEN_COUNT" == "0" ]]; then
+             gh pr create \
+              --base "$DEFAULT_BASE" \
+               --head "${{ steps.commit.outputs.branch }}" \
+               --title "$TITLE" \
+               --body "$BODY"
+           fi

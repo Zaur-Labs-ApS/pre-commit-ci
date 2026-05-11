@@ -1,7 +1,9 @@
 # pre-commit-ci
 A drop-in pre-commit pipeline for any repository, designed to be fast.
 
-pre-commit.ci is a great hosted service, but you might want a self-hosted alternative - for private repos, GitHub Enterprise, or to avoid relying on a third party. This workflow gives you the same auto-fix-and-push experience as a reusable GitHub Actions workflow you can call from any repo.
+pre-commit.ci is a great hosted service, but you might want a self-hosted alternative - for private repos, GitHub Enterprise, or to avoid relying on a third party. This workflow gives you the same auto-fix-and-push experience as a reusable GitHub Actions workflow you can call from any repo:
+* pre-commit.yml - runs pre-commit on every PR, with optional auto-fix-and-push
+* pre-commit-update.yml - runs pre-commit autoupdate on a schedule and opens (or updates) a single rolling PR with the bumped hook versions
 
 ## Features
 * Drop-in reusable workflow - call it from any repo with a few lines of config
@@ -9,11 +11,14 @@ pre-commit.ci is a great hosted service, but you might want a self-hosted altern
 * Fast cold runs with uv - uses Astral's uv for dependency installation
 * Cached hook environments - ~/.cache/pre-commit is keyed on OS, Python version, and config hash for near-instant warm runs
 * Optional auto-fix - automatically commits formatter and linter fixes back to the PR branch when enabled
+* Scheduled auto-update - bumps your hook versions on a cron and opens a single rolling PR (no duplicate PRs piling up)
 * CI-retriggering pushes via GitHub App - supply a bot's client ID and private key as secrets, and auto-fix commits will trigger your other workflows
 * Fail-fast mode - disable autofix to make the workflow fail loudly on hook violations instead of patching them
 
 
 ## Pipeline Template
+Runs pre-commit on every pull request.
+
 1. Create the file inside your repo.
     ```yaml
     # .github/workflows/pre-commit.yml
@@ -24,7 +29,32 @@ pre-commit.ci is a great hosted service, but you might want a self-hosted altern
 
     jobs:
         run-pre-commit:
-            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit.yml@v0.0.1
+            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit.yml@v0.0.3
+            with:
+                python_version: '3.13'
+            permissions:
+                contents: write
+    ```
+
+2. Push a commit and pre-commit will run.
+
+## Auto-update Template
+Runs pre-commit autoupdate on a schedule, and opens a PR against main if any hook versions changed. Subsequent runs push to the same pre-commit-auto-update branch, so you'll never have more than one open update PR at a time.
+
+1. Create the file inside your repo.
+    ```yaml
+    # .github/workflows/pre-commit-update.yml
+    name: pre-commit-update
+
+    on:
+        schedule:
+            # Every Monday at 06:00 UTC
+            - cron: '0 6 * * 1'
+        workflow_dispatch:
+
+    jobs:
+        run-pre-commit-update:
+            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit-update.yml@v0.0.3
             with:
                 python_version: '3.13'
             permissions:
@@ -32,10 +62,13 @@ pre-commit.ci is a great hosted service, but you might want a self-hosted altern
                 pull-requests: write
     ```
 
-2. Push a commit and pre-commit will run.
+2. On the next scheduled run (or manual trigger via the Actions tab), the workflow will open a PR on the pre-commit-auto-update branch if any hooks have new versions available.
+
+> [IMPORTANT]
+> Without a bot token, the auto-update PR is opened by `github-actions[bot]` and **will not trigger your other workflows** (including `pre-commit.yml`) on the PR. See the GitHub bot section below to enable CI re-triggering.
 
 ## Create a Github bot (Recommended)
-By default, commits made by GITHUB_TOKEN don't trigger other workflows on the PR (this is GitHub's built-in protection against infinite loops). A GitHub App token bypasses this, so your tests and other CI re-run on the auto-fix commit.
+By default, commits made by GITHUB_TOKEN don't trigger other workflows on the PR (this is GitHub's built-in protection against infinite loops). A GitHub App token bypasses this, so your tests and other CI re-run on the auto-fix and auto-update commits.
 
 1. Create a GitHub app by going to https://github.com/settings/apps. You can also get there by going to GitHub, click on your avatar, choose **Settings**, and **Developer Settings**.
 
@@ -43,7 +76,7 @@ By default, commits made by GITHUB_TOKEN don't trigger other workflows on the PR
 
 3. Give the bot a name, and a homepage url (Could be your repo or profile url).
 
-4. Inside permissions, give the bot **Read and write** access to **Contents**
+4. Inside permissions, give the bot **Read and write** access to **Contents** and **Pull requests**.
 
 5. Click **Create Github App**
 
@@ -70,6 +103,7 @@ By default, commits made by GITHUB_TOKEN don't trigger other workflows on the PR
 16. Do the same for the private key you saved earlier.
 
 17. Go into your Github workflow, and add the credentials like this:
+    **Pipeline workflow:**
     ```yaml
     # .github/workflows/pre-commit.yml
     name: pre-commit-ci
@@ -79,7 +113,31 @@ By default, commits made by GITHUB_TOKEN don't trigger other workflows on the PR
 
     jobs:
         run-pre-commit:
-            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit.yml@v0.0.1
+            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit.yml@v0.0.3
+            with:
+                python_version: '3.13'
+                bot_username: 'bot-name[bot]'
+                bot_email: 'bot-name[bot]@users.noreply.github.com'
+            secrets:
+                bot_client_id: ${{ secrets.PRE_COMMIT_CLIENT_ID }}
+                bot_private_key: ${{ secrets.PRE_COMMIT_PRIVATE_KEY }}
+            permissions:
+                contents: write
+    ```
+
+    **Auto-update workflow:**
+    ```yaml
+    # .github/workflows/pre-commit-update.yml
+    name: pre-commit-update
+
+    on:
+        schedule:
+            - cron: '0 6 * * 1'
+        workflow_dispatch:
+
+    jobs:
+        run-pre-commit-update:
+            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit-update.yml@v0.0.3
             with:
                 python_version: '3.13'
                 bot_username: 'bot-name[bot]'
