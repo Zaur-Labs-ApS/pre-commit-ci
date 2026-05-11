@@ -66,13 +66,6 @@ on:
         required: false
         default: '41898282+github-actions[bot]@users.noreply.github.com'
         type: string
-    secrets:
-      bot_client_id:
-        required: false
-        description: 'Client ID used to generate a token for the flow. (Optional)'
-      bot_private_key:
-        required: false
-        description: 'Private key used to generate a token for the flow. (Optional)'
 
 jobs:
   pre-commit:
