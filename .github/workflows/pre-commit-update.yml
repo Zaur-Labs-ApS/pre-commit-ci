@@ -1,0 +1,159 @@
+name: pre-commit-update
+
+on:
+  workflow_call:
+    inputs:
+      python_version:
+        description: 'Python version to use'
+        required: false
+        default: '3.14'
+        type: string
+      pre_commit_version:
+        description: 'pre-commit version to use'
+        required: false
+        default: '4.6.0'
+        type: string
+      organization_domain:
+        required: false
+        default: 'github.com'
+        type: string
+      bot_username:
+        required: false
+        default: 'github-actions[bot]'
+        type: string
+      bot_email:
+        required: false
+        default: '41898282+github-actions[bot]@users.noreply.github.com'
+        type: string
+    secrets:
+      bot_client_id:
+        required: false
+        description: 'Client ID used to generate a token for the flow. (Optional)'
+      bot_private_key:
+        required: false
+        description: 'Private key used to generate a token for the flow. (Optional)'
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: 'Python version to use'
+        required: false
+        default: '3.14'
+        type: string
+      pre_commit_version:
+        description: 'pre-commit version to use'
+        required: false
+        default: '4.6.0'
+        type: string
+      organization_domain:
+        description: 'GitHub Enterprise domain name. (If applicable)'
+        required: false
+        default: 'github.com'
+        type: string
+      bot_username:
+        required: false
+        default: 'github-actions[bot]'
+        type: string
+      bot_email:
+        required: false
+        default: '41898282+github-actions[bot]@users.noreply.github.com'
+        type: string
+    secrets:
+      bot_client_id:
+        required: false
+        description: 'Client ID used to generate a token for the flow. (Optional)'
+      bot_private_key:
+        required: false
+        description: 'Private key used to generate a token for the flow. (Optional)'
+
+jobs:
+  pre-commit-update:
+    name: pre-commit-update
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check for bot credentials
+        id: check-bot
+        env:
+          CLIENT_ID: ${{ secrets.bot_client_id }}
+          PRIVATE_KEY: ${{ secrets.bot_private_key }}
+        run: |
+          if [[ -n "$CLIENT_ID" && -n "$PRIVATE_KEY" ]]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub App token
+        if: steps.check-bot.outputs.present == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3
+        with:
+          client-id: ${{ secrets.bot_client_id }}
+          private-key: ${{ secrets.bot_private_key }}
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Setup Python
+        run: |
+          uv python install
+          uv venv
+
+      - name: Install pre-commit
+        run: |
+          uv pip install pre-commit==${{ inputs.pre_commit_version }}
+
+      - name: Run pre-commit autoupdate
+        id: run_pre_commit_autoupdate
+        run: |
+          uv run pre-commit autoupdate
+          if ! git diff --quiet .pre-commit-config.yaml; then
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit changes
+        id: commit
+        if: steps.run_pre_commit_autoupdate.outputs.updated == 'true'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          BRANCH="pre-commit-auto-update"
+
+          rm -f uv.lock
+          git config user.name ${{ inputs.bot_username }}
+          git config user.email ${{ inputs.bot_email }}
+          git add .pre-commit-config.yaml
+          git checkout -b "$BRANCH"
+          git commit -m "[pre-commit] chore: auto update"
+          git push -fu origin "$BRANCH"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Create pull request
+        if: steps.run_pre_commit_autoupdate.outputs.updated == 'true'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="Pre-commit auto update"
+          BODY="Automated PR with updates to pre-commit hooks."
+
+          if ! gh pr view "${{ steps.commit.outputs.branch }}" >/dev/null 2>&1; then
+            gh pr create \
+              --base main \
+              --head "${{ steps.commit.outputs.branch }}" \
+              --title "$TITLE" \
+              --body "$BODY"
+          fi
