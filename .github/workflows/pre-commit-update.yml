@@ -144,10 +144,17 @@ jobs:
           TITLE="Pre-commit auto update"
           BODY="Automated PR with updates to pre-commit hooks."
 
-          if ! gh pr view "${{ steps.commit.outputs.branch }}" >/dev/null 2>&1; then
-            gh pr create \
-              --base main \
-              --head "${{ steps.commit.outputs.branch }}" \
-              --title "$TITLE" \
-              --body "$BODY"
-          fi
+          DEFAULT_BASE="${{ github.event.repository.default_branch }}"
+          OPEN_COUNT="$(gh pr list \
+            --head "${{ steps.commit.outputs.branch }}" \
+            --state open \
+            --json number \
+            --jq 'length')"
+
+          if [[ "$OPEN_COUNT" == "0" ]]; then
+             gh pr create \
+              --base "$DEFAULT_BASE" \
+               --head "${{ steps.commit.outputs.branch }}" \
+               --title "$TITLE" \
+               --body "$BODY"
+           fi
