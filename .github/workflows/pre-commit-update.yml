@@ -99,19 +99,14 @@ jobs:
         with:
           python-version: ${{ inputs.python_version }}
 
-      - name: Setup Python
-        run: |
-          uv python install
-          uv venv
-
       - name: Install pre-commit
         run: |
-          uv pip install pre-commit==${{ inputs.pre_commit_version }}
+          uv tool install pre-commit==${{ inputs.pre_commit_version }}
 
       - name: Run pre-commit autoupdate
         id: run_pre_commit_autoupdate
         run: |
-          uv run pre-commit autoupdate
+          pre-commit autoupdate
           if ! git diff --quiet .pre-commit-config.yaml; then
             echo "updated=true" >> "$GITHUB_OUTPUT"
           else
@@ -127,7 +122,6 @@ jobs:
           set -euo pipefail
           BRANCH="pre-commit-auto-update"
 
-          rm -f uv.lock
           git config user.name ${{ inputs.bot_username }}
           git config user.email ${{ inputs.bot_email }}
           git add .pre-commit-config.yaml
