@@ -107,14 +107,9 @@ jobs:
         with:
           python-version: ${{ inputs.python_version }}
 
-      - name: Setup Python
-        run: |
-          uv python install
-          uv venv
-
       - name: Install pre-commit
         run: |
-          uv pip install pre-commit==${{ inputs.pre_commit_version }}
+          uv tool install pre-commit==${{ inputs.pre_commit_version }}
 
       - name: Cache pre-commit environments
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
@@ -127,7 +122,7 @@ jobs:
       - name: Run pre-commit
         id: run_pre_commit
         run: |
-          uv run pre-commit run --all-files --show-diff-on-failure
+          pre-commit run --all-files --show-diff-on-failure
         continue-on-error: true
 
       - name: Check pre-commit status
@@ -139,7 +134,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: |
-          rm -f uv.lock
           git config user.name ${{ inputs.bot_username }}
           git config user.email ${{ inputs.bot_email }}
           git add -A
