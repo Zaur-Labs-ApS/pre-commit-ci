@@ -29,7 +29,7 @@ Runs pre-commit on every pull request.
 
     jobs:
         run-pre-commit:
-            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit.yml@v0.0.3
+            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit.yml@v0.0.4
             with:
                 python_version: '3.13'
             permissions:
@@ -54,7 +54,7 @@ Runs pre-commit autoupdate on a schedule, and opens a PR against main if any hoo
 
     jobs:
         run-pre-commit-update:
-            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit-update.yml@v0.0.3
+            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit-update.yml@v0.0.4
             with:
                 python_version: '3.13'
             permissions:
@@ -113,7 +113,7 @@ By default, commits made by GITHUB_TOKEN don't trigger other workflows on the PR
 
     jobs:
         run-pre-commit:
-            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit.yml@v0.0.3
+            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit.yml@v0.0.4
             with:
                 python_version: '3.13'
                 bot_username: 'bot-name[bot]'
@@ -137,7 +137,7 @@ By default, commits made by GITHUB_TOKEN don't trigger other workflows on the PR
 
     jobs:
         run-pre-commit-update:
-            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit-update.yml@v0.0.3
+            uses: Zaur-Labs-ApS/pre-commit-ci/.github/workflows/pre-commit-update.yml@v0.0.4
             with:
                 python_version: '3.13'
                 bot_username: 'bot-name[bot]'
